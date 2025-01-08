@@ -1,39 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Form, Button } from 'react-bootstrap';
-import { useWebSocket } from '../context/WebSocketContext';
 
-const MessageInput = ({ onMessageSent }) => {
+const MessageInput = ({ onSendMessage, onTyping }) => {
     const [message, setMessage] = useState('');
-    const [typing, setTyping] = useState(false);
-    const ws = useWebSocket();
-    let typingTimeout;
+    const typingTimeout = useRef(null);
 
     const handleSend = () => {
-        if (message.trim() && ws) {
-            const payload = JSON.stringify({
-                type: 'direct',
-                recipient: 'damian',
-                text: message,
-            });
-
-            ws.send(payload);
-            onMessageSent({ sender: 'You', text: message });
+        if (message.trim()) {
+            onSendMessage(message);
             setMessage('');
         }
     };
 
     const handleTyping = () => {
-        if (!typing) {
-            setTyping(true);
-            ws.send(JSON.stringify({ type: 'typing', recipient: 'damian', status: "startTyping" }));
-
-            clearTimeout(typingTimeout);
-            typingTimeout = setTimeout(() => {
-                setTyping(false);
-                ws.send(JSON.stringify({ type: 'typing', recipient: 'damian', status: "stopTyping" }));
-            }, 2000);
-        };
-    }
+        onTyping('startTyping');
+        clearTimeout(typingTimeout.current);
+        typingTimeout.current = setTimeout(() => {
+            onTyping('stopTyping');
+        }, 2000);
+    };
 
     return (
         <Form className="d-flex mt-2">

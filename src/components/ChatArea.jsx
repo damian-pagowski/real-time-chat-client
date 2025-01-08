@@ -1,39 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { useWebSocket } from '../context/WebSocketContext';
+import React from 'react';
 import MessageInput from './MessageInput';
-const ChatArea = () => {
-    const ws = useWebSocket();
-    const [messages, setMessages] = useState([]);
-    const [typingIndicator, setTypingIndicator] = useState('');
 
-    useEffect(() => {
-        if (ws) {
-            ws.onmessage = (event) => {
-                const message = JSON.parse(event.data);
-                console.log(message)
-
-                if (message.type === 'direct') {
-                    console.log(message)
-                    setMessages((prev) => [...prev, message]);
-                } else if (message.type === 'typing') {
-                    if (message.status === 'startTyping') {
-                        setTypingIndicator(`${message.sender} is typing...`);
-                    } else {
-                        setTypingIndicator('');
-                    }
-                }
-
-            };
-        }
-    }, [ws]);
-
-    const handleMessageSent = (message) => {
-        setMessages((prev) => [...prev, message]);
-    };
-
+const ChatArea = ({ selectedUser, messages, typingIndicator, onSendMessage, onTyping }) => {
     return (
-
         <div className="p-3 flex-grow-1 d-flex flex-column">
+            <div className="mb-2">
+                <h6>{selectedUser ? `Chat with: ${selectedUser}` : 'Select a user to chat with'}</h6>
+            </div>
             <div
                 style={{
                     border: '1px solid #ddd',
@@ -49,10 +22,11 @@ const ChatArea = () => {
                 ))}
             </div>
             <div className="text-muted" style={{ height: '20px' }}>
-                {typingIndicator}
+                {typingIndicator && `${selectedUser} is typing...`}
             </div>
-            <MessageInput onMessageSent={handleMessageSent} />
+            <MessageInput onSendMessage={onSendMessage} onTyping={onTyping} />
         </div>
     );
-}
+};
+
 export default ChatArea;
