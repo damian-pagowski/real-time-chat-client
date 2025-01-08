@@ -7,31 +7,27 @@ import { WebSocketProvider } from './context/WebSocketContext';
 const App = () => {
   const [ws, setWs] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState([{"sender":"damian","text":"hujo","messageId":250,"timestamp":1736334695525,"type":"direct"}]);
+  const [messages, setMessages] = useState([]);
   const [typingStatus, setTypingStatus] = useState({});
 
-  const username = 'client'
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNsaWVudCIsImlhdCI6MTczNjMzMDcxN30.VQVUNrFaIXJfuq89bIB1yP7C0LKJupVFwS3KMLvSbRQ";
-
-
+  const username = import.meta.env.VITE_USERNAME;
+  const token = import.meta.env.VITE_WEBSOCKET_TOKEN;
+  const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
 
   useEffect(() => {
-    const socket = new WebSocket(`ws://localhost:3000/ws?token=${encodeURIComponent(token)}`);
+    const socket = new WebSocket(`${websocketUrl}?token=${encodeURIComponent(token)}`);
 
     socket.onopen = () => {
-      console.log('WebSocket connection opened (App)');
+      console.log('WebSocket connection opened');
       setWs(socket);
     };
 
-
     socket.onmessage = (event) => {
-      console.log('Raw WebSocket message received (App):', event.data);
       const message = JSON.parse(event.data);
+      console.log('WebSocket message received:', message);
 
       if (message.type === 'direct') {
-
         setMessages((prev) => [...prev, message]);
-
       } else if (message.type === 'typing') {
         setTypingStatus((prev) => ({
           ...prev,
@@ -41,7 +37,7 @@ const App = () => {
     };
 
     socket.onclose = () => {
-      console.log('WebSocket connection closed (App)');
+      console.log('WebSocket connection closed');
       setWs(null);
     };
 
@@ -53,21 +49,17 @@ const App = () => {
       console.log('Cleaning up WebSocket connection');
       socket.close();
     };
-  }, []);
+  }, [websocketUrl, token]);
 
   const handleSendMessage = (text) => {
-    console.log(text)
-    console.log(selectedUser)
     if (ws && selectedUser) {
-
-      const payload = JSON.stringify({
+      const payload = {
         type: 'direct',
         recipient: selectedUser,
         text,
-      });
+      };
 
-      console.log(JSON.stringify(payload))
-      ws.send(payload);
+      ws.send(JSON.stringify(payload));
       setMessages((prev) => [...prev, { sender: username, recipient: selectedUser, text }]);
     }
   };
@@ -80,7 +72,6 @@ const App = () => {
 
   return (
     <WebSocketProvider ws={ws}>
-
       <Navbar />
       <div className="d-flex" style={{ height: '90vh' }}>
         <Sidebar contacts={['damian', 'john', 'jane']} onSelectUser={setSelectedUser} />
@@ -94,7 +85,7 @@ const App = () => {
           onTyping={handleTyping}
         />
       </div>
-      </WebSocketProvider>
+    </WebSocketProvider>
   );
 };
 
