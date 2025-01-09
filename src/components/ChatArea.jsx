@@ -16,12 +16,9 @@ const ChatArea = ({
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
 
-    // Send read receipts for unread messages
     messages
       .filter((msg) => msg.sender === selectedUser && !msg.read)
-      // .forEach((msg) => console.log(msg))
-      // Only unread messages from the selected user
-      .forEach((msg) => onReadMessage(msg.id)); // Send read receipt for each unread message
+      .forEach((msg) => onReadMessage(msg.id));
   }, [messages, selectedUser, onReadMessage]);
 
   return (
@@ -45,9 +42,9 @@ const ChatArea = ({
           <p key={index}>
             <strong>{msg.sender || "Server"}:</strong> {msg.text}{" "}
             {msg.read ? (
-              <span className="text-success">✔</span> // Tick for read messages
+              <span className="text-success">✔</span> 
             ) : (
-              <span className="badge bg-primary">Unread</span> // Badge for unread messages
+              <span className="badge bg-primary">Unread</span>
             )}
           </p>
         ))}
