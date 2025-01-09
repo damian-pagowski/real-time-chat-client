@@ -3,11 +3,12 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import { WebSocketProvider } from './context/WebSocketContext';
+import axios from 'axios'; 
 
 const App = () => {
   const [ws, setWs] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([]); 
   const [typingStatus, setTypingStatus] = useState({});
 
   const username = import.meta.env.VITE_USERNAME;
@@ -16,7 +17,6 @@ const App = () => {
 
   useEffect(() => {
     const socket = new WebSocket(`${websocketUrl}?token=${encodeURIComponent(token)}`);
-
     socket.onopen = () => {
       console.log('WebSocket connection opened');
       setWs(socket);
@@ -27,11 +27,11 @@ const App = () => {
       console.log('WebSocket message received:', message);
 
       if (message.type === 'direct') {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => [...prev, message]); 
       } else if (message.type === 'typing') {
         setTypingStatus((prev) => ({
           ...prev,
-          [message.sender]: message.status === 'startTyping',
+          [message.sender]: message.status === 'startTyping', 
         }));
       }
     };
@@ -49,7 +49,23 @@ const App = () => {
       console.log('Cleaning up WebSocket connection');
       socket.close();
     };
-  }, [websocketUrl, token]);
+  }, [websocketUrl, token]); 
+
+  const fetchMessageHistory = async (user) => {
+    try {
+      const response = await axios.get(`http://127.0.0.1:3000/messages/direct`, {
+        params: { user1: username, user2: user },
+      });
+      setMessages(response.data); 
+    } catch (error) {
+      console.error('Error fetching message history:', error);
+    }
+  };
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user); 
+    fetchMessageHistory(user); 
+  };
 
   const handleSendMessage = (text) => {
     if (ws && selectedUser) {
@@ -74,7 +90,10 @@ const App = () => {
     <WebSocketProvider ws={ws}>
       <Navbar />
       <div className="d-flex" style={{ height: '90vh' }}>
-        <Sidebar contacts={['damian', 'john', 'jane']} onSelectUser={setSelectedUser} />
+        <Sidebar
+          contacts={['damian', 'john', 'jane']}
+          onSelectUser={handleSelectUser}
+        />
         <ChatArea
           selectedUser={selectedUser}
           messages={messages.filter(

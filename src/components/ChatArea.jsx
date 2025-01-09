@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import MessageInput from './MessageInput';
 
 const ChatArea = ({ selectedUser, messages, typingIndicator, onSendMessage, onTyping }) => {
+    const messagesEndRef = useRef(null); 
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages]);
+
     return (
         <div className="p-3 flex-grow-1 d-flex flex-column">
             <div className="mb-2">
@@ -12,7 +20,7 @@ const ChatArea = ({ selectedUser, messages, typingIndicator, onSendMessage, onTy
                     border: '1px solid #ddd',
                     padding: '10px',
                     height: '70%',
-                    overflowY: 'scroll',
+                    overflowY: 'scroll', 
                 }}
             >
                 {messages.map((msg, index) => (
@@ -20,11 +28,15 @@ const ChatArea = ({ selectedUser, messages, typingIndicator, onSendMessage, onTy
                         <strong>{msg.sender || 'Server'}:</strong> {msg.text}
                     </p>
                 ))}
+                <div ref={messagesEndRef} /> 
             </div>
             <div className="text-muted" style={{ height: '20px' }}>
                 {typingIndicator && `${selectedUser} is typing...`}
             </div>
-            <MessageInput onSendMessage={onSendMessage} onTyping={onTyping} />
+            <MessageInput
+                onSendMessage={onSendMessage}
+                onTyping={onTyping}
+            />
         </div>
     );
 };
