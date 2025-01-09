@@ -11,10 +11,47 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   const [typingStatus, setTypingStatus] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [contacts, setContacts] = useState({ chats: [], allUsers: [] }); 
 
   const username = import.meta.env.VITE_USERNAME;
   const token = import.meta.env.VITE_WEBSOCKET_TOKEN;
   const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
+
+  // Fetch chats and active users from the server
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const [chatsResponse, activeUsersResponse] = await Promise.all([
+          axios.get(`http://127.0.0.1:3000/messages/chats?user=${username}`),
+          axios.get('http://127.0.0.1:3000/users/active'),
+        ]);
+
+        const chats = chatsResponse.data
+          .filter((chat) => chat.username !== username) 
+          .map((chat) => ({
+            username: chat.username,
+            lastMessage: chat.lastMessage,
+            lastInteraction: chat.last_interaction,
+            online: activeUsersResponse.data.includes(chat.username),
+          }));
+
+        const allUsers = activeUsersResponse.data
+          .filter((user) => user !== username)
+          .filter((user) => !chats.some((chat) => chat.username === user));
+
+        setContacts({ chats, allUsers });
+
+        if (chats.length > 0) {
+          setSelectedUser(chats[0].username);
+          fetchMessageHistory(chats[0].username);
+        }
+      } catch (error) {
+        console.error('Error fetching contacts:', error);
+      }
+    };
+
+    fetchContacts();
+  }, [username]);
 
   useEffect(() => {
     const socket = new WebSocket(`${websocketUrl}?token=${encodeURIComponent(token)}`);
@@ -36,12 +73,29 @@ const App = () => {
         }));
       } else if (message.type === 'presence') {
         setOnlineUsers((prev) => {
-          if (message.status === 'online') {
-            return [...new Set([...prev, message.user])];
-          } else if (message.status === 'offline') {
-            return prev.filter((user) => user !== message.user);
-          }
-          return prev;
+          const updatedUsers =
+            message.status === 'online'
+              ? [...new Set([...prev, message.user])]
+              : prev.filter((user) => user !== message.user);
+
+          setContacts((prevContacts) => {
+            const updatedChats = prevContacts.chats.map((chat) =>
+              chat.username === message.user
+                ? { ...chat, online: message.status === 'online' }
+                : chat
+            );
+
+            const updatedAllUsers =
+              message.status === 'online'
+                ? [...prevContacts.allUsers, message.user].filter(
+                    (user) => !updatedChats.some((chat) => chat.username === user)
+                  )
+                : prevContacts.allUsers.filter((user) => user !== message.user);
+
+            return { chats: updatedChats, allUsers: updatedAllUsers };
+          });
+
+          return updatedUsers;
         });
       }
     };
@@ -101,9 +155,8 @@ const App = () => {
       <Navbar />
       <div className="d-flex" style={{ height: '90vh' }}>
         <Sidebar
-          contacts={['damian', 'john', 'jane']}
+          contacts={contacts} 
           onSelectUser={handleSelectUser}
-          onlineUsers={onlineUsers} 
         />
         <ChatArea
           selectedUser={selectedUser}
