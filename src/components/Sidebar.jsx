@@ -1,7 +1,7 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 
-const Sidebar = ({ contacts, onSelectUser }) => {
+const Sidebar = ({ contacts, onSelectUser, unreadCounts }) => { 
   return (
     <div className="bg-light p-3" style={{ width: '25%', borderRight: '1px solid #ddd' }}>
       <h5>Chats</h5>
@@ -13,7 +13,12 @@ const Sidebar = ({ contacts, onSelectUser }) => {
             action
             onClick={() => onSelectUser(chat.username)}
           >
-            <span>{chat.username || 'Unknown'}</span>
+            <span>
+              {chat.username || 'Unknown'}
+              {unreadCounts[chat.username] > 0 && (
+                <span className="badge bg-danger ms-2">{unreadCounts[chat.username]}</span>
+              )}
+            </span>
             <span className={chat.online ? 'text-success' : 'text-muted'}>
               {chat.online ? '● Online' : '● Offline'}
             </span>

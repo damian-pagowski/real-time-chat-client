@@ -12,18 +12,19 @@ const App = () => {
   const [typingStatus, setTypingStatus] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [contacts, setContacts] = useState({ chats: [], allUsers: [] });
-
+  const [unreadCounts, setUnreadCounts] = useState({});
+  
   const username = import.meta.env.VITE_USERNAME;
   const token = import.meta.env.VITE_WEBSOCKET_TOKEN;
   const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
-  const apiUrl = import.meta.env.VITE_API_URL; 
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchContacts = async () => {
       try {
         const [chatsResponse, activeUsersResponse] = await Promise.all([
-          axios.get(`${apiUrl}/messages/chats?user=${username}`), 
-          axios.get(`${apiUrl}/users/active`), 
+          axios.get(`${apiUrl}/messages/chats?user=${username}`),
+          axios.get(`${apiUrl}/users/active`),
         ]);
 
         const chats = chatsResponse.data
@@ -62,9 +63,27 @@ const App = () => {
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
       console.log(message)
-
       if (message.type === 'direct') {
-        setMessages((prev) => [...prev, message]);
+        setMessages((prev) => {
+          const updatedMessages = [...prev, message];
+
+          if (message.sender !== selectedUser) {
+            setUnreadCounts((prevCounts) => ({
+              ...prevCounts,
+              [message.sender]: (prevCounts[message.sender] || 0) + 1,
+            }));
+          }
+
+          return updatedMessages;
+        });
+      } else if (message.type === 'readReceipt') {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id == message.messageId
+              ? { ...msg, read: true }
+              : msg
+          )
+        );
       } else if (message.type === 'typing') {
         setTypingStatus((prev) => ({
           ...prev,
@@ -87,8 +106,8 @@ const App = () => {
             const updatedAllUsers =
               message.status === 'online'
                 ? [...prevContacts.allUsers, message.user].filter(
-                    (user) => !updatedChats.some((chat) => chat.username === user)
-                  )
+                  (user) => !updatedChats.some((chat) => chat.username === user)
+                )
                 : prevContacts.allUsers.filter((user) => user !== message.user);
 
             return { chats: updatedChats, allUsers: updatedAllUsers };
@@ -117,7 +136,14 @@ const App = () => {
       const response = await axios.get(`${apiUrl}/messages/direct`, {
         params: { user1: username, user2: user },
       });
-      setMessages(response.data);
+
+      setMessages(
+        response.data.map((msg) => ({
+          ...msg,
+          read: Boolean(msg.read),
+        }))
+      );
+      setUnreadCounts((prev) => ({ ...prev, [user]: 0 }));
     } catch (error) {
       console.error('Error fetching message history:', error);
     }
@@ -137,7 +163,7 @@ const App = () => {
       };
 
       ws.send(JSON.stringify(payload));
-      setMessages((prev) => [...prev, { sender: username, recipient: selectedUser, text }]);
+      setMessages((prev) => [...prev, { sender: username, recipient: selectedUser, text, read: false }]);
     }
   };
 
@@ -147,6 +173,14 @@ const App = () => {
     }
   };
 
+  const handleReadMessage = (messageId) => {
+    if (ws) {
+      console.log("Sending ACK " + messageId)
+      ws.send(JSON.stringify({ type: 'readReceipt', messageId }));
+    }
+  };
+
+
   return (
     <WebSocketProvider ws={ws}>
       <Navbar />
@@ -154,6 +188,7 @@ const App = () => {
         <Sidebar
           contacts={contacts}
           onSelectUser={handleSelectUser}
+          unreadCounts={unreadCounts}
         />
         <ChatArea
           selectedUser={selectedUser}
@@ -163,6 +198,7 @@ const App = () => {
           typingIndicator={typingStatus[selectedUser] || false}
           onSendMessage={handleSendMessage}
           onTyping={handleTyping}
+          onReadMessage={handleReadMessage}
         />
       </div>
     </WebSocketProvider>
