@@ -3,13 +3,14 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import { WebSocketProvider } from './context/WebSocketContext';
-import axios from 'axios'; 
+import axios from 'axios';
 
 const App = () => {
   const [ws, setWs] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [messages, setMessages] = useState([]); 
+  const [messages, setMessages] = useState([]);
   const [typingStatus, setTypingStatus] = useState({});
+  const [onlineUsers, setOnlineUsers] = useState([]);
 
   const username = import.meta.env.VITE_USERNAME;
   const token = import.meta.env.VITE_WEBSOCKET_TOKEN;
@@ -27,12 +28,21 @@ const App = () => {
       console.log('WebSocket message received:', message);
 
       if (message.type === 'direct') {
-        setMessages((prev) => [...prev, message]); 
+        setMessages((prev) => [...prev, message]);
       } else if (message.type === 'typing') {
         setTypingStatus((prev) => ({
           ...prev,
-          [message.sender]: message.status === 'startTyping', 
+          [message.sender]: message.status === 'startTyping',
         }));
+      } else if (message.type === 'presence') {
+        setOnlineUsers((prev) => {
+          if (message.status === 'online') {
+            return [...new Set([...prev, message.user])];
+          } else if (message.status === 'offline') {
+            return prev.filter((user) => user !== message.user);
+          }
+          return prev;
+        });
       }
     };
 
@@ -49,22 +59,22 @@ const App = () => {
       console.log('Cleaning up WebSocket connection');
       socket.close();
     };
-  }, [websocketUrl, token]); 
+  }, [websocketUrl, token]);
 
   const fetchMessageHistory = async (user) => {
     try {
       const response = await axios.get(`http://127.0.0.1:3000/messages/direct`, {
         params: { user1: username, user2: user },
       });
-      setMessages(response.data); 
+      setMessages(response.data);
     } catch (error) {
       console.error('Error fetching message history:', error);
     }
   };
 
   const handleSelectUser = (user) => {
-    setSelectedUser(user); 
-    fetchMessageHistory(user); 
+    setSelectedUser(user);
+    fetchMessageHistory(user);
   };
 
   const handleSendMessage = (text) => {
@@ -93,6 +103,7 @@ const App = () => {
         <Sidebar
           contacts={['damian', 'john', 'jane']}
           onSelectUser={handleSelectUser}
+          onlineUsers={onlineUsers} 
         />
         <ChatArea
           selectedUser={selectedUser}
