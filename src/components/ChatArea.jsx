@@ -31,7 +31,7 @@ const ChatArea = ({ selectedUser, messages, typingIndicator, onSendMessage, onTy
                 <div ref={messagesEndRef} /> 
             </div>
             <div className="text-muted" style={{ height: '20px' }}>
-                {typingIndicator && `${selectedUser} is typing...`}
+            {typingIndicator && `${selectedUser} is typing...`}
             </div>
             <MessageInput
                 onSendMessage={onSendMessage}

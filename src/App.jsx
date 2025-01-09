@@ -11,23 +11,23 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   const [typingStatus, setTypingStatus] = useState({});
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [contacts, setContacts] = useState({ chats: [], allUsers: [] }); 
+  const [contacts, setContacts] = useState({ chats: [], allUsers: [] });
 
   const username = import.meta.env.VITE_USERNAME;
   const token = import.meta.env.VITE_WEBSOCKET_TOKEN;
   const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
+  const apiUrl = import.meta.env.VITE_API_URL; 
 
-  // Fetch chats and active users from the server
   useEffect(() => {
     const fetchContacts = async () => {
       try {
         const [chatsResponse, activeUsersResponse] = await Promise.all([
-          axios.get(`http://127.0.0.1:3000/messages/chats?user=${username}`),
-          axios.get('http://127.0.0.1:3000/users/active'),
+          axios.get(`${apiUrl}/messages/chats?user=${username}`), 
+          axios.get(`${apiUrl}/users/active`), 
         ]);
 
         const chats = chatsResponse.data
-          .filter((chat) => chat.username !== username) 
+          .filter((chat) => chat.username !== username)
           .map((chat) => ({
             username: chat.username,
             lastMessage: chat.lastMessage,
@@ -56,13 +56,12 @@ const App = () => {
   useEffect(() => {
     const socket = new WebSocket(`${websocketUrl}?token=${encodeURIComponent(token)}`);
     socket.onopen = () => {
-      console.log('WebSocket connection opened');
       setWs(socket);
     };
 
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      console.log('WebSocket message received:', message);
+      console.log(message)
 
       if (message.type === 'direct') {
         setMessages((prev) => [...prev, message]);
@@ -101,7 +100,6 @@ const App = () => {
     };
 
     socket.onclose = () => {
-      console.log('WebSocket connection closed');
       setWs(null);
     };
 
@@ -110,14 +108,13 @@ const App = () => {
     };
 
     return () => {
-      console.log('Cleaning up WebSocket connection');
       socket.close();
     };
   }, [websocketUrl, token]);
 
   const fetchMessageHistory = async (user) => {
     try {
-      const response = await axios.get(`http://127.0.0.1:3000/messages/direct`, {
+      const response = await axios.get(`${apiUrl}/messages/direct`, {
         params: { user1: username, user2: user },
       });
       setMessages(response.data);
@@ -155,7 +152,7 @@ const App = () => {
       <Navbar />
       <div className="d-flex" style={{ height: '90vh' }}>
         <Sidebar
-          contacts={contacts} 
+          contacts={contacts}
           onSelectUser={handleSelectUser}
         />
         <ChatArea
