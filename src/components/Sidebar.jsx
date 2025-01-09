@@ -1,9 +1,12 @@
-import React from 'react';
-import { ListGroup } from 'react-bootstrap';
+import React from "react";
+import { ListGroup } from "react-bootstrap";
 
-const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => { 
+const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => {
   return (
-    <div className="bg-light p-3" style={{ width: '25%', borderRight: '1px solid #ddd' }}>
+    <div
+      className="bg-light p-3"
+      style={{ width: "25%", borderRight: "1px solid #ddd" }}
+    >
       <h5>Chats</h5>
       <ListGroup>
         {contacts.chats.map((chat, index) => (
@@ -14,13 +17,15 @@ const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => {
             onClick={() => onSelectUser(chat.username)}
           >
             <span>
-              {chat.username || 'Unknown'}
+              {chat.username || "Unknown"}
               {unreadCounts[chat.username] > 0 && (
-                <span className="badge bg-danger ms-2">{unreadCounts[chat.username]}</span>
+                <span className="badge bg-danger ms-2">
+                  {unreadCounts[chat.username]}
+                </span>
               )}
             </span>
-            <span className={chat.online ? 'text-success' : 'text-muted'}>
-              {chat.online ? '● Online' : '● Offline'}
+            <span className={chat.online ? "text-success" : "text-muted"}>
+              {chat.online ? "● Online" : "● Offline"}
             </span>
           </ListGroup.Item>
         ))}

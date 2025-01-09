@@ -1,28 +1,30 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // Added Link for navigation
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/login`, {
-        username,
-        password,
-      });
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('username', username);
-    //   setIsAuthenticated(true);
-      navigate('/'); // Redirect to main page
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/login`,
+        {
+          username,
+          password,
+        },
+      );
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("username", username);
+      navigate("/");
     } catch (err) {
-        console.log(err)
+      console.log(err);
 
-      setError('Invalid credentials. Please try again.');
+      setError("Invalid credentials. Please try again.");
     }
   };
 
@@ -32,7 +34,9 @@ const Login = () => {
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleLogin}>
         <div className="mb-3">
-          <label htmlFor="username" className="form-label">Username</label>
+          <label htmlFor="username" className="form-label">
+            Username
+          </label>
           <input
             type="text"
             id="username"
@@ -43,7 +47,9 @@ const Login = () => {
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="password" className="form-label">Password</label>
+          <label htmlFor="password" className="form-label">
+            Password
+          </label>
           <input
             type="password"
             id="password"
@@ -53,10 +59,12 @@ const Login = () => {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary">Login</button>
+        <button type="submit" className="btn btn-primary">
+          Login
+        </button>
       </form>
       <p className="mt-3">
-        Don&apos;t have an account? <Link to="/signup">Sign up</Link> {/* Added link to Signup */}
+        Don&apos;t have an account? <Link to="/signup">Sign up</Link>
       </p>
     </div>
   );

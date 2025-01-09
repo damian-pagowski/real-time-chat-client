@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import ChatArea from './components/ChatArea';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import { WebSocketProvider } from './context/WebSocketContext';
-import axios from 'axios';
-import { useNavigate, Routes, Route } from 'react-router-dom'; // Added Routes and Route for routing
+import React, { useState, useEffect } from "react";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import ChatArea from "./components/ChatArea";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import { WebSocketProvider } from "./context/WebSocketContext";
+import axios from "axios";
+import { useNavigate, Routes, Route } from "react-router-dom";
 
 const App = () => {
   const [ws, setWs] = useState(null);
@@ -16,16 +16,16 @@ const App = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [contacts, setContacts] = useState({ chats: [], allUsers: [] });
   const [unreadCounts, setUnreadCounts] = useState({});
-  const navigate = useNavigate(); // Added navigation hook
+  const navigate = useNavigate(); 
 
-  const token = localStorage.getItem('token'); // Get token from localStorage
-  const username = localStorage.getItem('username'); // Get username from localStorage
+  const token = localStorage.getItem("token");
+  const username = localStorage.getItem("username"); 
   const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     if (!token || !username) {
-      navigate('/login'); // Redirect to login if not logged in
+      navigate("/login");
       return;
     }
 
@@ -60,7 +60,7 @@ const App = () => {
           fetchMessageHistory(chats[0].username);
         }
       } catch (error) {
-        console.error('Error fetching contacts:', error);
+        console.error("Error fetching contacts:", error);
       }
     };
 
@@ -68,26 +68,28 @@ const App = () => {
   }, [username, token, apiUrl]);
 
   const handleLogout = () => {
-    localStorage.clear(); // Clear local storage
-    setWs(null); // Reset WebSocket connection
-    setSelectedUser(null); // Clear selected user
-    setMessages([]); // Clear messages
-    setTypingStatus({}); // Clear typing statuses
-    setOnlineUsers([]); // Clear online users
-    setContacts({ chats: [], allUsers: [] }); // Clear contacts
-    setUnreadCounts({}); // Clear unread counts
-    navigate('/login'); // Navigate to the login page
+    localStorage.clear();
+    setWs(null); 
+    setSelectedUser(null); 
+    setMessages([]); 
+    setTypingStatus({});
+    setOnlineUsers([]);
+    setContacts({ chats: [], allUsers: [] }); 
+    setUnreadCounts({});
+    navigate("/login"); 
   };
   useEffect(() => {
-    const socket = new WebSocket(`${websocketUrl}?token=${encodeURIComponent(token)}`);
+    const socket = new WebSocket(
+      `${websocketUrl}?token=${encodeURIComponent(token)}`,
+    );
     socket.onopen = () => {
       setWs(socket);
     };
 
     socket.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      console.log(message)
-      if (message.type === 'direct') {
+      console.log(message);
+      if (message.type === "direct") {
         setMessages((prev) => {
           const updatedMessages = [...prev, message];
 
@@ -100,38 +102,37 @@ const App = () => {
 
           return updatedMessages;
         });
-      } else if (message.type === 'readReceipt') {
+      } else if (message.type === "readReceipt") {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id == message.messageId
-              ? { ...msg, read: true }
-              : msg
-          )
+            msg.id == message.messageId ? { ...msg, read: true } : msg,
+          ),
         );
-      } else if (message.type === 'typing') {
+      } else if (message.type === "typing") {
         setTypingStatus((prev) => ({
           ...prev,
-          [message.sender]: message.status === 'startTyping',
+          [message.sender]: message.status === "startTyping",
         }));
-      } else if (message.type === 'presence') {
+      } else if (message.type === "presence") {
         setOnlineUsers((prev) => {
           const updatedUsers =
-            message.status === 'online'
+            message.status === "online"
               ? [...new Set([...prev, message.user])]
               : prev.filter((user) => user !== message.user);
 
           setContacts((prevContacts) => {
             const updatedChats = prevContacts.chats.map((chat) =>
               chat.username === message.user
-                ? { ...chat, online: message.status === 'online' }
-                : chat
+                ? { ...chat, online: message.status === "online" }
+                : chat,
             );
 
             const updatedAllUsers =
-              message.status === 'online'
+              message.status === "online"
                 ? [...prevContacts.allUsers, message.user].filter(
-                  (user) => !updatedChats.some((chat) => chat.username === user)
-                )
+                    (user) =>
+                      !updatedChats.some((chat) => chat.username === user),
+                  )
                 : prevContacts.allUsers.filter((user) => user !== message.user);
 
             return { chats: updatedChats, allUsers: updatedAllUsers };
@@ -147,7 +148,7 @@ const App = () => {
     };
 
     socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error("WebSocket error:", error);
     };
 
     return () => {
@@ -165,11 +166,11 @@ const App = () => {
         response.data.map((msg) => ({
           ...msg,
           read: Boolean(msg.read),
-        }))
+        })),
       );
       setUnreadCounts((prev) => ({ ...prev, [user]: 0 }));
     } catch (error) {
-      console.error('Error fetching message history:', error);
+      console.error("Error fetching message history:", error);
     }
   };
 
@@ -181,38 +182,43 @@ const App = () => {
   const handleSendMessage = (text) => {
     if (ws && selectedUser) {
       const payload = {
-        type: 'direct',
+        type: "direct",
         recipient: selectedUser,
         text,
       };
 
       ws.send(JSON.stringify(payload));
-      setMessages((prev) => [...prev, { sender: username, recipient: selectedUser, text, read: false }]);
+      setMessages((prev) => [
+        ...prev,
+        { sender: username, recipient: selectedUser, text, read: false },
+      ]);
     }
   };
 
   const handleTyping = (status) => {
     if (ws && selectedUser) {
-      ws.send(JSON.stringify({ type: 'typing', recipient: selectedUser, status }));
+      ws.send(
+        JSON.stringify({ type: "typing", recipient: selectedUser, status }),
+      );
     }
   };
 
   const handleReadMessage = (messageId) => {
     if (ws) {
-      console.log("Sending ACK " + messageId)
-      ws.send(JSON.stringify({ type: 'readReceipt', messageId }));
+      console.log("Sending ACK " + messageId);
+      ws.send(JSON.stringify({ type: "readReceipt", messageId }));
     }
   };
   return (
     <WebSocketProvider ws={ws}>
       <Navbar onLogout={handleLogout} />
       <Routes>
-        <Route path="/login" element={<Login />} /> {/* Login route */}
-        <Route path="/signup" element={<Signup />} /> {/* Signup route */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route
           path="/"
           element={
-            <div className="d-flex" style={{ height: '90vh' }}>
+            <div className="d-flex" style={{ height: "90vh" }}>
               <Sidebar
                 contacts={contacts}
                 onSelectUser={handleSelectUser}
@@ -222,7 +228,9 @@ const App = () => {
               <ChatArea
                 selectedUser={selectedUser}
                 messages={messages.filter(
-                  (msg) => msg.sender === selectedUser || msg.recipient === selectedUser
+                  (msg) =>
+                    msg.sender === selectedUser ||
+                    msg.recipient === selectedUser,
                 )}
                 typingIndicator={typingStatus[selectedUser] || false}
                 onSendMessage={handleSendMessage}
