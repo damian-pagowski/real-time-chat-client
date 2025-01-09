@@ -1,7 +1,7 @@
 import React from 'react';
 import { ListGroup } from 'react-bootstrap';
 
-const Sidebar = ({ contacts, onSelectUser, unreadCounts }) => { 
+const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => { 
   return (
     <div className="bg-light p-3" style={{ width: '25%', borderRight: '1px solid #ddd' }}>
       <h5>Chats</h5>
@@ -25,7 +25,6 @@ const Sidebar = ({ contacts, onSelectUser, unreadCounts }) => {
           </ListGroup.Item>
         ))}
       </ListGroup>
-
       <h5 className="mt-3">Active Users</h5>
       <ListGroup>
         {contacts.allUsers.map((user, index) => (

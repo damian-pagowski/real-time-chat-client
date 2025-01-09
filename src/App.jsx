@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 import { WebSocketProvider } from './context/WebSocketContext';
 import axios from 'axios';
+import { useNavigate, Routes, Route } from 'react-router-dom'; // Added Routes and Route for routing
 
 const App = () => {
   const [ws, setWs] = useState(null);
@@ -13,18 +16,28 @@ const App = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [contacts, setContacts] = useState({ chats: [], allUsers: [] });
   const [unreadCounts, setUnreadCounts] = useState({});
-  
-  const username = import.meta.env.VITE_USERNAME;
-  const token = import.meta.env.VITE_WEBSOCKET_TOKEN;
+  const navigate = useNavigate(); // Added navigation hook
+
+  const token = localStorage.getItem('token'); // Get token from localStorage
+  const username = localStorage.getItem('username'); // Get username from localStorage
   const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
   const apiUrl = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
+    if (!token || !username) {
+      navigate('/login'); // Redirect to login if not logged in
+      return;
+    }
+
     const fetchContacts = async () => {
       try {
         const [chatsResponse, activeUsersResponse] = await Promise.all([
-          axios.get(`${apiUrl}/messages/chats?user=${username}`),
-          axios.get(`${apiUrl}/users/active`),
+          axios.get(`${apiUrl}/messages/chats?user=${username}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${apiUrl}/users/active`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         const chats = chatsResponse.data
@@ -52,8 +65,19 @@ const App = () => {
     };
 
     fetchContacts();
-  }, [username]);
+  }, [username, token, apiUrl]);
 
+  const handleLogout = () => {
+    localStorage.clear(); // Clear local storage
+    setWs(null); // Reset WebSocket connection
+    setSelectedUser(null); // Clear selected user
+    setMessages([]); // Clear messages
+    setTypingStatus({}); // Clear typing statuses
+    setOnlineUsers([]); // Clear online users
+    setContacts({ chats: [], allUsers: [] }); // Clear contacts
+    setUnreadCounts({}); // Clear unread counts
+    navigate('/login'); // Navigate to the login page
+  };
   useEffect(() => {
     const socket = new WebSocket(`${websocketUrl}?token=${encodeURIComponent(token)}`);
     socket.onopen = () => {
@@ -179,28 +203,36 @@ const App = () => {
       ws.send(JSON.stringify({ type: 'readReceipt', messageId }));
     }
   };
-
-
   return (
     <WebSocketProvider ws={ws}>
-      <Navbar />
-      <div className="d-flex" style={{ height: '90vh' }}>
-        <Sidebar
-          contacts={contacts}
-          onSelectUser={handleSelectUser}
-          unreadCounts={unreadCounts}
+      <Navbar onLogout={handleLogout} />
+      <Routes>
+        <Route path="/login" element={<Login />} /> {/* Login route */}
+        <Route path="/signup" element={<Signup />} /> {/* Signup route */}
+        <Route
+          path="/"
+          element={
+            <div className="d-flex" style={{ height: '90vh' }}>
+              <Sidebar
+                contacts={contacts}
+                onSelectUser={handleSelectUser}
+                unreadCounts={unreadCounts}
+                onlineUsers={onlineUsers}
+              />
+              <ChatArea
+                selectedUser={selectedUser}
+                messages={messages.filter(
+                  (msg) => msg.sender === selectedUser || msg.recipient === selectedUser
+                )}
+                typingIndicator={typingStatus[selectedUser] || false}
+                onSendMessage={handleSendMessage}
+                onTyping={handleTyping}
+                onReadMessage={handleReadMessage}
+              />
+            </div>
+          }
         />
-        <ChatArea
-          selectedUser={selectedUser}
-          messages={messages.filter(
-            (msg) => msg.sender === selectedUser || msg.recipient === selectedUser
-          )}
-          typingIndicator={typingStatus[selectedUser] || false}
-          onSendMessage={handleSendMessage}
-          onTyping={handleTyping}
-          onReadMessage={handleReadMessage}
-        />
-      </div>
+      </Routes>
     </WebSocketProvider>
   );
 };
