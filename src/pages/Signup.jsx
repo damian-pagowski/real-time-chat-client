@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; 
-import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { registerUser, loginUser } from "../api/api";
 
 const Signup = () => {
   const [username, setUsername] = useState("");
@@ -11,22 +11,14 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/register`, {
-        username,
-        password,
-      });
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/login`,
-        {
-          username,
-          password,
-        },
-      );
-      localStorage.setItem("token", response.data.token);
+      await registerUser(username, password); // Register the user
+      const { token } = await loginUser(username, password); // Login after registration
+      localStorage.setItem("token", token);
       localStorage.setItem("username", username);
       navigate("/");
     } catch (err) {
-      setError("Error registering user. Please try again." + err);
+      console.error(err);
+      setError("Error registering user. Please try again.");
     }
   };
 

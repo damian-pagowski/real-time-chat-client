@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
+import { loginUser } from "../api/api";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -11,19 +11,12 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/login`,
-        {
-          username,
-          password,
-        },
-      );
-      localStorage.setItem("token", response.data.token);
+      const { token } = await loginUser(username, password);
+      localStorage.setItem("token", token);
       localStorage.setItem("username", username);
       navigate("/");
     } catch (err) {
-      console.log(err);
-
+      console.error(err);
       setError("Invalid credentials. Please try again.");
     }
   };

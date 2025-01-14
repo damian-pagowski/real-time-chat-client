@@ -15,6 +15,7 @@ const ChatArea = ({
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    console.log("ChatArea: " + JSON.stringify(messages))
 
     messages
       .filter((msg) => msg.sender === selectedUser && !msg.read)
@@ -40,7 +41,7 @@ const ChatArea = ({
       >
         {messages.map((msg, index) => (
           <p key={index}>
-            <strong>{msg.sender || "Server"}:</strong> {msg.text}{" "}
+            <strong>{msg.sender?.username || "Server"}:</strong> {msg.text}{" "}
             {msg.read ? (
               <span className="text-success">✔</span> 
             ) : (
