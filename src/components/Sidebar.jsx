@@ -35,7 +35,7 @@ const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => {
         {contacts.allUsers.map((user, index) => (
           <ListGroup.Item
             key={index}
-            className="d-flex justify-content-between"
+            className="d-flex justify-content-between bg-dark text-white"
             action
             onClick={() => onSelectUser(user)}
           >

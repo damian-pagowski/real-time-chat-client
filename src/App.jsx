@@ -55,7 +55,6 @@ const App = () => {
 
         const allUsers = activeUsers
           .filter((user) => user !== username)
-          .filter((user) => !chatList.some((chat) => chat.username === user));
 
         setContacts({ chats: chatList, allUsers });
 
