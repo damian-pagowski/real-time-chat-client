@@ -4,7 +4,7 @@ import { ListGroup } from "react-bootstrap";
 const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => {
   return (
     <div
-      className="bg-light p-3"
+      className="p-3"
       style={{ width: "25%", borderRight: "1px solid #ddd" }}
     >
       <h5>Chats</h5>
@@ -12,20 +12,20 @@ const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => {
         {contacts.chats.map((chat, index) => (
           <ListGroup.Item
             key={index}
-            className="d-flex justify-content-between"
+            className="d-flex justify-content-between bg-dark text-white"
             action
             onClick={() => onSelectUser(chat.username)}
           >
             <span>
               {chat.username || "Unknown"}
               {unreadCounts[chat.username] > 0 && (
-                <span className="badge bg-danger ms-2">
+                <span className="badge ms-2">
                   {unreadCounts[chat.username]}
                 </span>
               )}
             </span>
-            <span className={chat.online ? "text-success" : "text-muted"}>
-              {chat.online ? "● Online" : "● Offline"}
+            <span className={chat.online ? "text-success" : "text-danger"}>
+              {chat.online ? "●" : "●"}
             </span>
           </ListGroup.Item>
         ))}
@@ -40,7 +40,7 @@ const Sidebar = ({ contacts, onSelectUser, unreadCounts, onlineUsers }) => {
             onClick={() => onSelectUser(user)}
           >
             <span>{user}</span>
-            <span className="text-success">● Online</span>
+            <span className="text-success">●</span>
           </ListGroup.Item>
         ))}
       </ListGroup>

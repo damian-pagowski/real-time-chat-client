@@ -17,6 +17,7 @@ import {
   sendTypingStatus,
   sendReadReceipt,
 } from "./api/ws";
+import styles from "./Page.module.css";
 
 
 const App = () => {
